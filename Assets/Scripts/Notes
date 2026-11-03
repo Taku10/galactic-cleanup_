@@ -1,0 +1,113 @@
+Step 1 — Create a UI Text for the score
+
+Hierarchy → Right-click → UI → Canvas
+
+Right-click Canvas → UI → Text - TextMeshPro
+
+If it asks to import TMP essentials → click Import
+
+Rename the text object to: ScoreText
+
+In the Inspector (TextMeshPro component):
+
+Text = Score: 0
+
+Font Size = 36 (or whatever)
+
+Position it:
+
+RectTransform → anchor it top-left
+
+Move it a little inward (like X=20, Y=-20)
+
+Step 2 — Create ScoreManager script
+
+Project window → Create → C# Script → name: ScoreManager
+
+Paste:
+
+using UnityEngine;
+using TMPro;
+
+public class ScoreManager : MonoBehaviour
+{
+    public static ScoreManager Instance;
+
+    public TMP_Text scoreText;
+    public int Score { get; private set; }
+
+    void Awake()
+    {
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+        Instance = this;
+    }
+
+    void Start()
+    {
+        UpdateUI();
+    }
+
+    public void AddPoint(int amount = 1)
+    {
+        Score += amount;
+        UpdateUI();
+    }
+
+    void UpdateUI()
+    {
+        if (scoreText != null)
+            scoreText.text = "Score: " + Score;
+    }
+}
+Step 3 — Add ScoreManager to the scene
+
+Hierarchy → Create Empty → name: GameManager
+
+Add Component → ScoreManager
+
+Assign the text:
+
+Drag ScoreText (from Hierarchy) into ScoreManager → scoreText
+
+✅ Now the UI is ready.
+
+Step 4 — Give 1 point when enemy dies
+
+Open your enemy health script (ZombieHealth).
+
+Change it to this (only adding the score line):
+
+using UnityEngine;
+
+public class ZombieHealth : MonoBehaviour
+{
+    public int maxHealth = 1;
+    int currentHealth;
+
+    public GameObject explosionPrefab;
+
+    void Awake()
+    {
+        currentHealth = maxHealth;
+    }
+
+    public void TakeDamage(int amount)
+    {
+        currentHealth -= amount;
+        if (currentHealth <= 0)
+        {
+            // +1 score on kill
+            if (ScoreManager.Instance != null)
+                ScoreManager.Instance.AddPoint(1);
+
+            if (explosionPrefab != null)
+                Instantiate(explosionPrefab, transform.position, Quaternion.identity);
+
+            Destroy(gameObject);
+        }
+    }
+}
